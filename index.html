@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEL Book Finder</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        h1 { color: #2a6496; text-align: center; margin-bottom: 20px; }
+        .filters { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 6px; background-color: #f9f9f9; }
+        .filter-group { display: flex; flex-direction: column; min-width: 200px; }
+        label { font-weight: bold; margin-bottom: 5px; color: #555; }
+        select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: white; font-size: 14px; }
+        #book-list { display: flex; flex-wrap: wrap; gap: 20px; }
+        .book-card { background-color: #e9eff5; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); width: calc(33.333% - 14px); min-width: 250px; box-sizing: border-box; }
+        .book-card h3 { color: #3a79ad; margin-top: 0; margin-bottom: 5px; font-size: 18px; }
+        .book-card p { margin: 0; font-size: 14px; line-height: 1.4; }
+        .book-card strong { font-weight: 600; }
+        .no-results { text-align: center; width: 100%; color: #888; padding: 40px; }
+        @media (max-width: 768px) {
+            .book-card { width: calc(50% - 10px); }
+            .filters { flex-direction: column; }
+        }
+        @media (max-width: 480px) {
+            .book-card { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SEL Book List Finder</h1>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="topic-select">SEL Topic:</label>
+                <select id="topic-select">
+                    <option value="">All Topics</option>
+                    </select>
+            </div>
+            <div class="filter-group">
+                <label for="casel-select">CASEL Competency:</label>
+                <select id="casel-select">
+                    <option value="">All CASEL</option>
+                    </select>
+            </div>
+            <div class="filter-group">
+                <label for="sora-select">Available on Sora?:</label>
+                <select id="sora-select">
+                    <option value="">Any Sora Status</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="grade-select">Grade Level:</label>
+                <select id="grade-select">
+                    <option value="">All Grades</option>
+                    <option value="K-2">K-2</option>
+                    <option value="ALL">ALL</option>
+                    </select>
+            </div>
+        </div>
+
+        <div id="book-list">
+            </div>
+    </div>
+
+    <script>
+        // --- START BOOK DATA ---
+        const booksData = JSON.parse(`
+${
+  /* The JSON data is embedded here as a string */
+  `[
+  {
+    "Title": "Broken",
+    "Author": "X. Feng",
+    "SEL Topics": "Forgiveness, Mistakes",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "No More Chairs",
+    "Author": "Dan Gill",
+    "SEL Topics": "Inclusion, Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "One",
+    "Author": "Kathryn Otoshi",
+    "SEL Topics": "Bullying, Friendship",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Llama Llama and the Bully Goat",
+    "Author": "Anna Dewdney",
+    "SEL Topics": "Bullying",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "K-2"
+  },
+  {
+    "Title": "The Recess Queen",
+    "Author": "Alexis O'Neill",
+    "SEL Topics": "Bullying",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Yoon and the Jade Bracelet",
+    "Author": "Helen Recorvits",
+    "SEL Topics": "Bullying, Honesty",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "When Sophie Thinks She Can't",
+    "Author": "Molly Bang",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Name Jar",
+    "Author": "Yangsook Choi",
+    "SEL Topics": "Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "My Name is a Song",
+    "Author": "Jamilah Thompkins-Bigelow",
+    "SEL Topics": "Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I Walk with Vanessa",
+    "Author": "Kerascoët",
+    "SEL Topics": "Bullying, Kindness",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I Forgive Alex",
+    "Author": "Kerascoët",
+    "SEL Topics": "Forgiveness",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Stand Tall, Molly Lou Melon",
+    "Author": "Patty Lovell",
+    "SEL Topics": "Self Esteem",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I'm Sorry You Got Mad",
+    "Author": "Kyle Lukoff",
+    "SEL Topics": "Friendship, Forgiveness",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Invisible Boy",
+    "Author": "Trudy Ludwig",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Just Kidding",
+    "Author": "Trudy Ludwig",
+    "SEL Topics": "Bullying",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "My Secret Bully",
+    "Author": "Trudy Ludwig",
+    "SEL Topics": "Bullying",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Brave Every Day",
+    "Author": "Trudy Ludwig",
+    "SEL Topics": "Anxiety, Kindness",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Trouble Talk",
+    "Author": "Trudy Ludwig",
+    "SEL Topics": "Honesty, Friendship",
+    "CASEL": "Responsible Decision Making",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Quiet Please, Owen McPhee!",
+    "Author": "Trudy Ludwig",
+    "SEL Topics": "Friendship, Focusing Attention",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Touch the Sky",
+    "Author": "Stephanie V.W. Lucianovic",
+    "SEL Topics": "Growth Mindset, Kindness",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Power of One",
+    "Author": "Trudy Ludwig",
+    "SEL Topics": "Kindness",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Rulers of the Playground",
+    "Author": "Joseph Kuefler",
+    "SEL Topics": "Friendship, Bullying",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Philomena's New Glasses",
+    "Author": "Brenda Maloney",
+    "SEL Topics": "Peer Pressure, Self Esteem",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Spork",
+    "Author": "Kyo Maclear",
+    "SEL Topics": "Self Esteem",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Home in a Lunchbox",
+    "Author": "Cherry Mo",
+    "SEL Topics": "Anxiety, Tolerance",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Be Kind",
+    "Author": "Pat Miller",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Trouble",
+    "Author": "Katherine Battersby",
+    "SEL Topics": "Tolerance, Friendship",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "That Neighbor Kid",
+    "Author": "Daniel Miyares",
+    "SEL Topics": "Friendship",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Saturday",
+    "Author": "Oge Mora",
+    "SEL Topics": "Flexibility",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Kindest Red",
+    "Author": "Ibithaj Muhammad & S.K. Ali",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Proudest Blue",
+    "Author": "Ibithaj Muhammad & S.K. Ali",
+    "SEL Topics": "Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Enemy Pie",
+    "Author": "Derek Munson",
+    "SEL Topics": "Tolerance, Friendship",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Knot Cannot",
+    "Author": "Tiffany Stone",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "A Family Like Ours",
+    "Author": "Frank Murphy",
+    "SEL Topics": "Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Kindergarten: Where Kindness Matters Every Day",
+    "Author": "Vera Ahiyya",
+    "SEL Topics": "Kindness, Friendship",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "K-2"
+  },
+  {
+    "Title": "My Friend!",
+    "Author": "Taye Diggs",
+    "SEL Topics": "Friendship",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Starkeeper",
+    "Author": "Faith Pray",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Power of One: Every Act of Kindness Counts",
+    "Author": "Trudy Ludwig",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "When We Are Kind",
+    "Author": "Monique Gray Smith",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Neither",
+    "Author": "Airlie Anderson",
+    "SEL Topics": "Self Esteem, Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Each Kindness",
+    "Author": "Jacqueline Woodson",
+    "SEL Topics": "Kindness, Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Last Stop on Market Street",
+    "Author": "Matt de la Peña",
+    "SEL Topics": "Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Ordinary Mary's Extraordinary Deed",
+    "Author": "Emily Pearson",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Sandwich Swap",
+    "Author": "Queen Rania",
+    "SEL Topics": "Kindness, Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Spoon",
+    "Author": "Amy Krouse Rosenthal",
+    "SEL Topics": "Self Esteem, Tolerance",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Same, Same, but Different",
+    "Author": "Jenny Sue Kostecki-Shaw",
+    "SEL Topics": "Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Boy with Big Big Feelings",
+    "Author": "Naomi O'Brien",
+    "SEL Topics": "Emotions, Self Esteem",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Adrian Simcox Does NOT Have a Horse",
+    "Author": "Marcy Campbell",
+    "SEL Topics": "Kindness, Tolerance",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Rabbit Listened",
+    "Author": "Cori Doerrfeld",
+    "SEL Topics": "Calm Down Strategies, Managing Stress & Anxiety",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Milo Imagines the World",
+    "Author": "Matt de la Peña",
+    "SEL Topics": "Tolerance, Keeping an Open Mind",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Jabari Jumps",
+    "Author": "Gaia Cornwall",
+    "SEL Topics": "Growth Mindset, Perseverence",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "After the Fall (How Humpty Dumpty Got Back Up Again)",
+    "Author": "Dan Santat",
+    "SEL Topics": "Growth Mindset, Perseverence",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Come with Me",
+    "Author": "Holly McGhee",
+    "SEL Topics": "Responsibility",
+    "CASEL": "Responsible Decision Making",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "A Small Thing but Big",
+    "Author": "Tony Johnston",
+    "SEL Topics": "Anxiety, Growth Mindset",
+    "CASEL": "Self Management",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "There Might Be Lobsters",
+    "Author": "Carolyn Crimi",
+    "SEL Topics": "Anxiety, Growth Mindset",
+    "CASEL": "Self Management",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "When Things Aren't Going Right, Go Left",
+    "Author": "Marc Colagiovanni",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Electric Slide and Kai",
+    "Author": "Kelly J. Baptist",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "This Story is Not About a Kitten",
+    "Author": "Randall de Sève",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "When the Fog Rolls In",
+    "Author": "Pam Fong",
+    "SEL Topics": "Anxiety, Stress",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Capybara is Friends with Everyone",
+    "Author": "Maddie Frost",
+    "SEL Topics": "Friendship",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Many Colors of Harpreet Singh",
+    "Author": "Supriya Kelkar",
+    "SEL Topics": "Self Esteem, Emotions",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "John's Turn",
+    "Author": "Mac Barnett",
+    "SEL Topics": "Self Esteem, Anxiety",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "When Langston Dances",
+    "Author": "Kaija Langley",
+    "SEL Topics": "Self Esteem",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "You Matter",
+    "Author": "Christian Robinson",
+    "SEL Topics": "Self Esteem",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Jenny Mei is Sad",
+    "Author": "Tracy Subisak",
+    "SEL Topics": "Emotions, Kindness",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Perfectly Norman",
+    "Author": "Tom Percival",
+    "SEL Topics": "Self Esteem, Anxiety",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Billy's Bravery",
+    "Author": "Tom Percival",
+    "SEL Topics": "Self Esteem, Anxiety",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Thank you, Omu",
+    "Author": "Oge Mora",
+    "SEL Topics": "Kindness, Sharing",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Wombat Said Come In",
+    "Author": "Carmen Agra Deedy",
+    "SEL Topics": "Kindness, Sharing",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Most Magnificent Thing",
+    "Author": "Ashley Spires",
+    "SEL Topics": "Perseverence, Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Big Feelings",
+    "Author": "Alexandra Penfold",
+    "SEL Topics": "Self Regulation",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Frustrating Book",
+    "Author": "Mo Willems",
+    "SEL Topics": "Self Regulation",
+    "CASEL": "Self Management",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "K - 2"
+  },
+  {
+    "Title": "Today I Feel Silly",
+    "Author": "Jamie Lee Curtis",
+    "SEL Topics": "Self Regulation",
+    "CASEL": "Self Management",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Places to Be",
+    "Author": "Mac Barnett",
+    "SEL Topics": "Self Regulation, Friendship",
+    "CASEL": "Self Management",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "When Sophie Gets Angry-- Really, Really, Angry",
+    "Author": "Molly Bang",
+    "SEL Topics": "Self Regulation",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Kalamata's Kitchen",
+    "Author": "Sarah Thomas",
+    "SEL Topics": "Self Regulation",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Friends Are Friends, Forever",
+    "Author": "Dane Liu",
+    "SEL Topics": "Friendship",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Evelyn Del Rey is Moving Away",
+    "Author": "Meg Medina",
+    "SEL Topics": "Friendship, Emotions",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "David Jumps In",
+    "Author": "Alan Woo",
+    "SEL Topics": "Friendship",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "My Best Friend",
+    "Author": "Julie Fogliano",
+    "SEL Topics": "Friendship",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "If You Plant a Seed",
+    "Author": "Kadir Nelson",
+    "SEL Topics": "Friendship",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "A Hat for Mrs. Goldman",
+    "Author": "Michelle Edwards",
+    "SEL Topics": "Friendship",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Everyone Can Learn to Ride a Bicycle",
+    "Author": "Christopher Raschka",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Snake's Big Mistake",
+    "Author": "Sarah Kurpiel",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Girl Who Never Made Mistakes",
+    "Author": "Mark Pett",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Your Fantastic Elastic Brain",
+    "Author": "JoAnn Deak",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Dot",
+    "Author": "Peter Reynolds",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Jabari Tries",
+    "Author": "Gaia Cornwall",
+    "SEL Topics": "Growth Mindset, Setting Goals",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Elephants Cannot Dance",
+    "Author": "Mo Willems",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "K - 2"
+  },
+  {
+    "Title": "Ish",
+    "Author": "Peter Reynolds",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "How to Catch a Star",
+    "Author": "Oliver Jeffers",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Eli's lie-o-meter : a story about telling the truth",
+    "Author": "Jeffrey Ebbeler",
+    "SEL Topics": "Honesty",
+    "CASEL": "Responsible Decision Making",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Pig the Fibber",
+    "Author": "Aaron Blabey",
+    "SEL Topics": "Honesty",
+    "CASEL": "Responsible Decision Making",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "My Mouth is a Volcano",
+    "Author": "Julia Cook",
+    "SEL Topics": "Calm Down Strategies, Emotions",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Not Yet, Yeti",
+    "Author": "Bethany V. Freitas",
+    "SEL Topics": "Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Don't Worry, Murray",
+    "Author": "David Ezra Stein",
+    "SEL Topics": "Anxiety",
+    "CASEL": "Self Management",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Becoming Vanessa",
+    "Author": "Vanessa Brantley-Newton",
+    "SEL Topics": "Growth Mindset, Anxiety",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Laxmi's Mooch",
+    "Author": "Shelly Anand",
+    "SEL Topics": "Self-acceptance",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Year We Learned to Fly",
+    "Author": "Jacqueline Woodson",
+    "SEL Topics": "Emotions",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Ruthie and the (Not so) Teeny Tiny Lie",
+    "Author": "Laura Rankin",
+    "SEL Topics": "Honesty",
+    "CASEL": "Responsible Decision Making",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Strictly No Elephants",
+    "Author": "Lisa Mantchev",
+    "SEL Topics": "Kindness, Tolerance",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I Am Peace",
+    "Author": "Susan Verde",
+    "SEL Topics": "Mindfulness",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "A Handful of Quiet",
+    "Author": "Thich Nhat Hanh",
+    "SEL Topics": "Mindfulness",
+    "CASEL": "Self Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Even Superheroes Have Bad Days",
+    "Author": "Shelly Becker",
+    "SEL Topics": "Mindfulness, Growth Mindset",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I Am Yoga",
+    "Author": "Susan Verde",
+    "SEL Topics": "Mindfulness",
+    "CASEL": "Self Management",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Our Class is a Family",
+    "Author": "John Schu",
+    "SEL Topics": "Kindness",
+    "CASEL": "Social Awareness",
+    "On Sora?": "No",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "The Big Umbrella",
+    "Author": "Amy June Bates",
+    "SEL Topics": "Kindness",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I Am Me",
+    "Author": "Susan Verde",
+    "SEL Topics": "Self Esteem",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Alphabreaths Too",
+    "Author": "Christopher Willard & Daniel Rechtschaffen",
+    "SEL Topics": "Mindfulness",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Be You!",
+    "Author": "Peter Reynolds",
+    "SEL Topics": "Self Esteem",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "What's the Matter, Marlo?",
+    "Author": "Andrew Arnold",
+    "SEL Topics": "Friendship, Emotions",
+    "CASEL": "Relationship Skills",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Tomorrow I'll Be Kind",
+    "Author": "Jessica Hische",
+    "SEL Topics": "Kindness, Friendship",
+    "CASEL": "Social Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I Am Not Happy",
+    "Author": "Caroline L Perry",
+    "SEL Topics": "Emotions, Tolerance",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Abby Invents Unbreakable Crayons",
+    "Author": "Arlyne Simon",
+    "SEL Topics": "Growth Mindset, Perseverence",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "Abby Invents the Folidbot",
+    "Author": "Arlyne Simon",
+    "SEL Topics": "Growth Mindset, Perseverence",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I Worked Hard On That!",
+    "Author": "Robyn Wall",
+    "SEL Topics": "Growth Mindset, Perseverence",
+    "CASEL": "Self Awareness",
+    "On Sora?": "Yes",
+    "Grade Level Recommendation": "ALL"
+  },
+  {
+    "Title": "I Can't Draw",
+    "Author": "Stephen W. Martin",
+    "SEL Topics": "Growth Mindset, Perseverence",
+    "CASEL": "Self Awareness"
+  }
+]`
+)}`);
+        // --- END BOOK DATA ---
+
+        const bookListContainer = document.getElementById('book-list');
+        const topicSelect = document.getElementById('topic-select');
+        const caselSelect = document.getElementById('casel-select');
+        const soraSelect = document.getElementById('sora-select');
+        const gradeSelect = document.getElementById('grade-select');
+
+        // Helper function to get unique, sorted values
+        function getUniqueValues(key) {
+            const values = new Set();
+            booksData.forEach(book => {
+                if (book[key]) {
+                    book[key].split(',').forEach(val => {
+                        // Clean up spaces and only add non-empty values
+                        const cleanVal = val.trim();
+                        if (cleanVal) values.add(cleanVal);
+                    });
+                }
+            });
+            return Array.from(values).sort();
+        }
+
+        // Populate dynamic filters
+        function populateFilters() {
+            // SEL Topics
+            const selTopics = getUniqueValues('SEL Topics');
+            selTopics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.textContent = topic;
+                topicSelect.appendChild(option);
+            });
+
+            // CASEL Competencies
+            const caselCompetencies = getUniqueValues('CASEL');
+            caselCompetencies.forEach(casel => {
+                const option = document.createElement('option');
+                option.value = casel;
+                option.textContent = casel;
+                caselSelect.appendChild(option);
+            });
+        }
+
+        // Render books based on filters
+        function renderBooks() {
+            const selectedTopic = topicSelect.value;
+            const selectedCasel = caselSelect.value;
+            const selectedSora = soraSelect.value;
+            const selectedGrade = gradeSelect.value;
+
+            const filteredBooks = booksData.filter(book => {
+                // Topic Filter
+                const topicMatch = !selectedTopic || book['SEL Topics'].includes(selectedTopic);
+
+                // CASEL Filter
+                const caselMatch = !selectedCasel || book['CASEL'].includes(selectedCasel);
+
+                // Sora Filter
+                const soraMatch = !selectedSora || book['On Sora?'] === selectedSora;
+
+                // Grade Filter
+                const gradeMatch = !selectedGrade || book['Grade Level Recommendation'] === selectedGrade;
+
+                return topicMatch && caselMatch && soraMatch && gradeMatch;
+            });
+
+            bookListContainer.innerHTML = '';
+
+            if (filteredBooks.length === 0) {
+                bookListContainer.innerHTML = '<div class="no-results">No books match your current filters.</div>';
+                return;
+            }
+
+            filteredBooks.forEach(book => {
+                const card = document.createElement('div');
+                card.classList.add('book-card');
+                card.innerHTML = `
+                    <h3>${book.Title}</h3>
+                    <p><strong>Author:</strong> ${book.Author}</p>
+                    <p><strong>SEL Topics:</strong> ${book['SEL Topics']}</p>
+                    <p><strong>CASEL:</strong> ${book.CASEL}</p>
+                    <p><strong>On Sora?:</strong> ${book['On Sora?']}</p>
+                    <p><strong>Grade Level:</strong> ${book['Grade Level Recommendation']}</p>
+                `;
+                bookListContainer.appendChild(card);
+            });
+        }
+
+        // Attach event listeners
+        topicSelect.addEventListener('change', renderBooks);
+        caselSelect.addEventListener('change', renderBooks);
+        soraSelect.addEventListener('change', renderBooks);
+        gradeSelect.addEventListener('change', renderBooks);
+
+        // Initial load
+        populateFilters();
+        renderBooks();
+
+    </script>
+</body>
+</html>
